@@ -1,0 +1,21 @@
+# Environmentálne premenné (tajné kľúče, hesla)
+.env
+
+# Python virtuálne prostredie
+venv/
+
+# Python vygenerované súbory a vyrovnávacia pamäť
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Databázy (ak používate lokálnu SQLite databázu)
+*.sqlite3
+*.db
+
+# Testy a pokrytie kódu
+.coverage
+htmlcov/
+.pytest_cache/
+data/
+doc/

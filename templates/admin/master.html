@@ -1,0 +1,14 @@
+{% extends 'admin/base.html' %}
+
+{% block head_css %}
+    {{ super() }}
+    <!-- Bootswatch téma Flatly (môžeš prepísať na 'darkly', 'yeti', atď.) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootswatch@4.5.2/dist/lux/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Drobné úpravy, aby to vyzeralo uhladenejšie -->
+    <style>
+        body { background-color: #f8f9fa; }
+        .navbar { margin-bottom: 20px; }
+        .table { background-color: #ffffff; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    </style>
+{% endblock %}
