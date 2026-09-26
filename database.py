@@ -143,7 +143,7 @@ class Zakazka(db.Model):
         foreign_keys=[id_zakaznika]
     )        
     def __str__(self):
-        return f"{self.popis} ({self.typ_zakazky.value})"
+        return f"{self.popis}"
     
 
 

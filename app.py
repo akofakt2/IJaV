@@ -1,8 +1,9 @@
 import os
 import sqlite3
+from urllib.parse import urlparse, parse_qs
 from dotenv import load_dotenv
 from flask import Flask, request, redirect, url_for, flash, render_template, render_template_string, jsonify, Blueprint
-from flask_admin import Admin, AdminIndexView
+from flask_admin import Admin, AdminIndexView, expose
 from flask_admin.menu import MenuLink
 from flask_admin.contrib.sqla import ModelView
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
@@ -14,10 +15,10 @@ from sqlalchemy.engine import Engine
 from markupsafe import Markup
 
 from werkzeug.security import generate_password_hash
-from wtforms import PasswordField
+from wtforms import PasswordField, TextAreaField, HiddenField, StringField
 
 # Importujeme inštanciu databázy a modely z nášho database.py
-from database import db, Zamestnanec, Firma, Zakazka, Polozka, ZurnalCeny, ZurnalStavy, Pokladna, TypFirmy, Ucet, init_languages, Jazyk, TypPohybu
+from database import db, Zamestnanec, Firma, Zakazka, Polozka, ZurnalCeny, ZurnalStavy, Pokladna, TypFirmy, Ucet, init_languages, Jazyk, TypPohybu, StavZakazky
 
 from api import api_bp
 
@@ -113,6 +114,51 @@ class PolozkaInline(InlineFormAdmin):
 
 # 2. Hlavné nastavenie pre Zákazku
 class ZakazkaView(SecureView):
+    # Pomenujeme šablónu podľa tabuľky
+    list_template = 'admin/zakazka_filter_list.html'
+    
+    #vykreaslenie podmienky
+    def render(self, template, **kwargs):
+        #Stav zakazky
+        kwargs['status_options'] = StavZakazky
+        kwargs['current_status'] = request.args.get('status', '')
+        
+        #firma
+        # 1. Načítame zoznam všetkých firiem pre dropdown
+        # Poznamka: Ak ich máš tisíce, odporúča sa zoradiť podľa názvu
+        kwargs['firmy'] = Firma.query.filter_by(typ='ZAKAZNIK').order_by(Firma.nazov.asc()).all()
+        kwargs['current_firma_id'] = request.args.get('firma_id', '')
+        
+        # Odovzdáme všetky aktuálne URL args, aby sme ich v HTML vedeli uchovať
+        kwargs['request_args'] = request.args
+        return super().render(template, **kwargs)
+
+    #vyber zakazky podla podmienky
+    def get_query(self):
+        query = super().get_query()
+        
+        #filter pre enum stav
+        status_val = request.args.get('status')
+        if status_val:
+            query = query.filter(Zakazka.stav_zakazky == status_val)
+            
+        # 2. Filter pre Cudzí kľúč (Firma)
+        id_firma = request.args.get('firma_id')
+        if id_firma:
+            query = query.filter(Zakazka.id_firma == id_firma)
+        return query
+
+    #kolko takych zakazok mam
+    def get_count_query(self):
+        query = super().get_count_query()
+        status_val = request.args.get('status')
+        if status_val:
+            query = query.filter(Zakazka.stav_zakazky == status_val)
+        id_firma = request.args.get('firma_id')
+        if id_firma:
+            query = query.filter(Zakazka.id_firma == id_firma)            
+        return query
+    
     create_modal = False
     edit_modal = False
     
@@ -200,6 +246,21 @@ class ZakazkaView(SecureView):
 #zobrazenie poloziek iba pre zakazku
 class PolozkaView(SecureView):
     # ==========================================
+    # 3. EDITÁCIA A PRIDÁVANIE (FORMULÁRE)
+    # ==========================================
+    # Otvárať formuláre v pop-up okne namiesto novej stránky
+    create_modal = True
+    edit_modal = True
+        
+    # Pre modálne okná MUSÍŠ použiť premenné s '_modal_':
+    create_modal_template = 'admin/zakazka_create.html'
+    edit_modal_template = 'admin/zakazka_edit.html'
+
+    # Pre istotu (ak by niekto otvoril stránku mimo modalu):
+    #create_template = 'admin/zakazka_create.html'
+    #edit_template = 'admin/zakazka_edit.html'
+    
+    # ==========================================
     # 1. BEZPEČNOSŤ A VIDITEĽNOSŤ (MENU)
     # ==========================================
     def is_visible(self):
@@ -207,7 +268,7 @@ class PolozkaView(SecureView):
         return False
         
     column_default_sort = ('id', True)
-    
+
     # ==========================================
     # 2. ZOBRAZENIE (TABUĽKA - ZOZNAM POLOŽIEK)
     # ==========================================
@@ -243,20 +304,48 @@ class PolozkaView(SecureView):
         'zakazka': 'Zákazka'
     }    
 
-    # ==========================================
-    # 3. EDITÁCIA A PRIDÁVANIE (FORMULÁRE)
-    # ==========================================
-    # Otvárať formuláre v pop-up okne namiesto novej stránky
-    create_modal = True
-    edit_modal = True
 
+    #### nastavenie formulara na edit
+    form_columns = [
+        'popis', 'dodavatel',
+        'typ_prekladu', 'jazyk_z', 'jazyk_do', 'cena', 'naklady',
+        'stav_platby', 'typ_platby', 'stav_naklady'
+    ]
+    
+    form_extra_fields = {
+        'meno_zakazky': StringField('Zákazka', render_kw={'readonly': True})
+    }
+    
     # Obmedzenia pre konkrétne polia vo formulári (roletky)
     form_args = {
         'dodavatel': {
             'query_factory': lambda: db.session.query(Firma).filter(Firma.typ == TypFirmy.DODAVATEL)
         }
     }
+            
+    # Automatické predvyplnenie zákazky z URL parametra zakazka_id
+    def create_form(self, obj=None):
+        form = super().create_form(obj)                
+        # Získanie zakazka_id z URL
+        return_url = request.args.get('url') or request.referrer or ''
+        parsed_url = urlparse(return_url)
+        parsed_query = parse_qs(parsed_url.query)
+        zakazka_id = parsed_query.get('zakazka_id')[0]
+        
+        zakazka = db.session.get(Zakazka, zakazka_id)            
+        # Nastavíme len textový názov do formulára
+        form.meno_zakazky = str(zakazka)
+                
+        return form    
 
+    """
+        def validate_form(self, form):
+            # Flask-Admin volá toto na overenie
+            is_valid = super().validate_form(form)        
+            if not is_valid:
+                print("   CHYBY:", form.errors)
+            return is_valid
+    """    
     # ==========================================
     # 4. LOGIKA PODĽA URL A PRÁCA S DATABÁZOU
     # ==========================================
@@ -283,6 +372,12 @@ class PolozkaView(SecureView):
             
     def on_model_change(self, form, model, is_created):
         """Ovplyvňuje databázu (Save): Tesne pred uložením doplní autora."""
+        return_url = request.args.get('url')
+        parsed_url = urlparse(return_url)
+        parsed_query = parse_qs(parsed_url.query)
+        zakazka_id = parsed_query['zakazka_id'][0]          
+        model.id_zakazky = zakazka_id
+
         if is_created and not model.id_zamestnanca:
             model.id_zamestnanca = current_user.id
         super().on_model_change(form, model, is_created)
@@ -409,7 +504,8 @@ admin = Admin(
 # Pridanie tabuliek do Admin panelu, aby sme ich mohli klikať
 admin.add_view(FirmaView(Firma, db.session, name='Firmy'))
 admin.add_view(ZakazkaView(Zakazka, db.session, name='Zákazky'))
-admin.add_view(PolozkaView(Polozka, db.session, name='Položky'))
+#admin.add_view(PolozkaView(Polozka, db.session, name='Položky'))
+admin.add_view(PolozkaView(Polozka, db.session, name='Položky', endpoint='polozka'))
 
 admin.add_view(ZamestnanecView(Zamestnanec, db.session, name='Zamestanci'))
 admin.add_view(PokladnaView(Pokladna, db.session,name='Pokladňa'))

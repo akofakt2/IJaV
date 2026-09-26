@@ -1,0 +1,50 @@
+{% extends 'admin/model/modals/edit.html' %}
+
+{% block modal_body %}
+  {% import 'admin/lib.html' as lib with context %}
+
+  <form action="" method="POST" enctype="multipart/form-data" class="admin-form form-horizontal">
+    {{ form.hidden_tag() if form.hidden_tag }}
+
+    {# DEBUG BLOK: Ak formulár zlyhá, ukáže presne, ktoré polia robia problém #}
+    {% if form.errors %}
+        <div style="background-color: #ffe6e6; border: 2px solid red; padding: 15px; margin-bottom: 20px; color: red;">
+            <strong>Backend validácia zlyhala! Chyby:</strong><br>
+            {{ form.errors }}
+        </div>
+    {% endif %}
+    
+    <!-- Rovnaký obsah formulára ako vyššie -->
+    <div class="row">
+      <div class="col-md-4">{{ lib.render_field(form, form.zakazka) }}</div>
+      <div class="col-md-8">{{ lib.render_field(form, form.popis) }}</div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-6">{{ lib.render_field(form, form.dodavatel) }}</div>
+      <div class="col-md-6">{{ lib.render_field(form, form.id_zamestnanca) }}</div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-4">{{ lib.render_field(form, form.typ_prekladu) }}</div>
+      <div class="col-md-4">{{ lib.render_field(form, form.jazyk_z) }}</div>
+      <div class="col-md-4">{{ lib.render_field(form, form.jazyk_do) }}</div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-6">{{ lib.render_field(form, form.cena) }}</div>
+      <div class="col-md-6">{{ lib.render_field(form, form.naklady) }}</div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-4">{{ lib.render_field(form, form.stav_platby) }}</div>
+      <div class="col-md-4">{{ lib.render_field(form, form.typ_platby) }}</div>
+      <div class="col-md-4">{{ lib.render_field(form, form.stav_naklady) }}</div>
+    </div>
+
+    <div class="modal-footer" style="padding-bottom: 0; margin-top: 15px; margin-bottom: -15px;">
+      <button type="submit" class="btn btn-primary">Uložiť zmeny</button>
+      <button type="button" class="btn btn-default" data-dismiss="modal">Zrušiť</button>
+    </div>
+  </form>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% import 'admin/lib.html' as lib with context %}
+{% extends 'admin/model/modals/create.html' %}
+
+{% block body %}
+  <form action="{{ get_url('.create_view', url=return_url, modal=True) }}" method="POST" enctype="multipart/form-data" class="admin-form form-horizontal">
+    {{ form.hidden_tag() if form.hidden_tag }}    
+    <input type="hidden" name="zakazka_id" value="{{ form.zakazka_id }}">
+    <!-- Riadok 1 -->
+    <div class="row">
+      <div class="col-md-4">{{ form.meno_zakazky or 'Neznáma položka' }}</div>
+      <div class="col-md-8">{{ lib.render_field(form, form.popis) }}</div>
+    </div>
+
+    <!-- Riadok 2 -->
+    <div class="row">
+      <div class="col-md-6">{{ lib.render_field(form, form.dodavatel) }}</div>      
+    </div>
+
+    <!-- Riadok 3 -->
+    <div class="row">
+      <div class="col-md-4">{{ lib.render_field(form, form.typ_prekladu) }}</div>
+      <div class="col-md-4">{{ lib.render_field(form, form.jazyk_z) }}</div>
+      <div class="col-md-4">{{ lib.render_field(form, form.jazyk_do) }}</div>
+    </div>
+
+    <!-- Riadok 4 -->
+    <div class="row">
+      <div class="col-md-6">{{ lib.render_field(form, form.cena) }}</div>
+      <div class="col-md-6">{{ lib.render_field(form, form.naklady) }}</div>
+    </div>
+
+    <!-- Riadok 5 -->
+    <div class="row">
+      <div class="col-md-4">{{ lib.render_field(form, form.stav_platby) }}</div>
+      <div class="col-md-4">{{ lib.render_field(form, form.typ_platby) }}</div>
+      <div class="col-md-4">{{ lib.render_field(form, form.stav_naklady) }}</div>
+    </div>
+
+    <div class="modal-footer" style="padding-bottom: 0; margin-top: 15px; margin-bottom: -15px;">
+      <button type="submit" class="btn btn-primary">Uložiť položku</button>
+      <button type="button" class="btn btn-default" data-dismiss="modal">Zrušiť</button>
+    </div>
+  </form>
+{% endblock %}
