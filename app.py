@@ -10,7 +10,7 @@ from flask_login import LoginManager, login_user, logout_user, login_required, c
 from flask_admin.model.form import InlineFormAdmin
 from flask_babel import Babel
 
-from sqlalchemy import event
+from sqlalchemy import event, func
 from sqlalchemy.engine import Engine
 from markupsafe import Markup
 
@@ -278,30 +278,26 @@ class PolozkaView(SecureView):
     # PRESNÝ zoznam stĺpcov, ktoré chceš v tabuľke vidieť (týmto zaručíš, 
     # že tam nebude strašiť stĺpec Zákazka ani iné nechcené relácie)
     column_list = (
-        'id',
+        'dodavatel',        
         'popis',
         'typ_prekladu',
-        'jazyk_z',
-        'jazyk_do',
+        'jazyky_prekladu',        
         'cena',
         'naklady',
         'stav_platby',
-        'stav_naklady',
-        'dodavatel'
+        'stav_naklady'        
     )
 
     # Ako sa budú stĺpce volať v hlavičke tabuľky a vo formulároch
     column_labels = {
         'popis': 'Popis',
         'typ_prekladu': 'Typ prekladu',
-        'jazyk_z': 'Z jazyka',
-        'jazyk_do': 'Do jazyka',
+        'jazyk_prekladu': 'Preklad',        
         'cena': 'Predajná cena (€)',
         'naklady': 'Náklady (€)',
         'stav_platby': 'Stav platby',
         'stav_naklady': 'Stav náklady',
-        'dodavatel': 'Dodávateľ',
-        'zakazka': 'Zákazka'
+        'dodavatel': 'Dodávateľ'        
     }    
 
 
@@ -338,14 +334,6 @@ class PolozkaView(SecureView):
                 
         return form    
 
-    """
-        def validate_form(self, form):
-            # Flask-Admin volá toto na overenie
-            is_valid = super().validate_form(form)        
-            if not is_valid:
-                print("   CHYBY:", form.errors)
-            return is_valid
-    """    
     # ==========================================
     # 4. LOGIKA PODĽA URL A PRÁCA S DATABÁZOU
     # ==========================================
@@ -362,6 +350,8 @@ class PolozkaView(SecureView):
         zakazka_id = request.args.get('zakazka_id')
         if zakazka_id:
             kwargs['aktualna_zakazka'] = db.session.get(Zakazka, int(zakazka_id))
+            kwargs['suma_cena'] = db.session.query(func.sum(Polozka.cena)).filter(Polozka.id_zakazky == zakazka_id).scalar() or 0
+            kwargs['suma_naklady'] = db.session.query(func.sum(Polozka.naklady)).filter(Polozka.id_zakazky == zakazka_id).scalar() or 0
         return super().render(template, **kwargs)
 
     def on_form_prefill(self, form, id):
@@ -504,7 +494,6 @@ admin = Admin(
 # Pridanie tabuliek do Admin panelu, aby sme ich mohli klikať
 admin.add_view(FirmaView(Firma, db.session, name='Firmy'))
 admin.add_view(ZakazkaView(Zakazka, db.session, name='Zákazky'))
-#admin.add_view(PolozkaView(Polozka, db.session, name='Položky'))
 admin.add_view(PolozkaView(Polozka, db.session, name='Položky', endpoint='polozka'))
 
 admin.add_view(ZamestnanecView(Zamestnanec, db.session, name='Zamestanci'))

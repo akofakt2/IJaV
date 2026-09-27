@@ -109,7 +109,7 @@ class Jazyk(db.Model):
     nazov: Mapped[str] = mapped_column(String(100), nullable=False)           # Názov (Slovenčina, Angličtina...)
 
     def __str__(self):
-        return f"{self.kod} - {self.nazov}"
+        return f"{self.kod}"
 
 # ==========================================
 # 3. BIZNIS LOGIKA (ZÁKAZKY A POLOŽKY)
@@ -181,6 +181,10 @@ class Polozka(db.Model):
     
     def __str__(self):
         return f"{self.popis} ({self.typ_zakazky})"
+    
+    @property
+    def jazyky_prekladu(self):
+        return f"{self.jazyk_z} -> {self.jazyk_do}"
 
 # ==========================================
 # 4. ŽURNÁLY A POKLADŇA
