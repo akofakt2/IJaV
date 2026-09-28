@@ -4,45 +4,48 @@
 
 
 <!-- Dropdown filter priamo nad tabuľkou -->
-<div
-  style="margin: 10px 0; padding: 8px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; display: block; width: 100%">
-  <form method="GET" action="{{ request.path }}" class="form-inline" style="margin: 0;">
 
-    <div class="form-group" style="margin: 0;">
-      <label for="status_filter" style="margin-right: 8px; font-weight: bold;">Status:</label>
+<form method="GET" action="{{ request.path }}" class="form-inline" style="margin: 0;">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-4">
+        <div class="form-group" style="margin: 0;">
+          <label for="status_filter" style="margin-right: 8px; font-weight: bold;">Status:</label>
 
-      <select name="status" id="status_filter" class="form-control input-sm" onchange="this.form.submit()">
-        <option value="">-- Všetky --</option>
-        {% for item in status_options %}
-        <option value="{{ item.name }}" {% if current_status==item.name %}selected{% endif %}>
-          {{ item.value }}
-        </option>
-        {% endfor %}
-      </select>
+          <select name="status" id="status_filter" class="form-control input-sm" onchange="this.form.submit()">
+            <option value="">-- Všetky --</option>
+            {% for item in status_options %}
+            <option value="{{ item.name }}" {% if current_status==item.name %}selected{% endif %}>
+              {{ item.value }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+      </div>
+      <div class="col-md-4">
+        <!-- Filter 2: Firma (Foreign Key) -->
+        <div class="form-group" style="margin: 0;">
+          <label for="firma_filter" style="margin-right: 5px; font-weight: bold;">Firma:</label>
+          <select name="firma_id" id="firma_filter" class="form-control input-sm" onchange="this.form.submit()">
+            <option value="">-- Všetky firmy --</option>
+            {% for firma in firmy %}
+            <option value="{{ firma.id }}" {% if current_firma_id==firma.id|string %}selected{% endif %}>
+              {{ firma.nazov }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+      </div>
+      <div class="col-md-4">
+        {% if current_status or current_firma_id %}
+        <a href="{{ request.path }}" class="btn btn-default btn-sm" style="margin-left: 8px;">Vynulovať</a>
+        {% endif %}
+      </div>
     </div>
-
-
-
-    <!-- Filter 2: Firma (Foreign Key) -->
-    <div class="form-group" style="margin: 0;">
-      <label for="firma_filter" style="margin-right: 5px; font-weight: bold;">Firma:</label>
-      <select name="firma_id" id="firma_filter" class="form-control input-sm" onchange="this.form.submit()">
-        <option value="">-- Všetky firmy --</option>
-        {% for firma in firmy %}
-        <option value="{{ firma.id }}" {% if current_firma_id==firma.id|string %}selected{% endif %}>
-          {{ firma.nazov }}
-        </option>
-        {% endfor %}
-      </select>
-    </div>
-
-
-    {% if current_status %}
-    <a href="{{ request.path }}" class="btn btn-default btn-sm" style="margin-left: 8px;">Vynulovať</a>
-    {% endif %}
-
-  </form>
-</div>
-
+  </div>
+</form>
+<hr>
 {{ super() }}
 {% endblock %}

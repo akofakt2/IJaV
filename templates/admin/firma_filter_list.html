@@ -1,0 +1,81 @@
+{% extends 'admin/model/list.html' %}
+
+
+{% block model_menu_bar %}
+
+
+<!-- Dropdown filter priamo nad tabuľkou -->
+
+<form method="GET" action="{{ request.path }}" class="form-inline" style="margin: 0;">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-4">
+        <!-- Filter 2: Firma (Foreign Key) -->
+        <div class="form-group" style="margin: 0;">
+          <label for="firma_typ_filter" style="margin-right: 5px; font-weight: bold;">Typ firmy:</label>
+          <select name="firma_typ" id="firma_typ_filter" class="form-control input-sm" onchange="this.form.submit()">
+            <option value="">-- Typy firiem --</option>
+            {% for typ in typ_firmy %}
+            <option value="{{ typ.name }}" {% if current_firma_typ==typ.name|string %}selected{% endif %}>
+              {{ typ.value }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="form-group" style="margin: 0;">
+          <input type="hidden" id="firma-name-filter" name="firma-name-filter" style="width: 100%;" />
+        </div>
+      </div>
+      <div class="col-md-4">        
+        <a href="{{ request.path }}" class="btn btn-default btn-sm" style="margin-left: 8px;">Vynulovať</a>        
+      </div>
+    </div>
+  </div>
+</form>
+<hr>
+{{ super() }}
+{% endblock %}
+
+{% block tail %}
+{{ super() }}
+
+<script>
+  $(document).ready(function () {
+    $('#firma-name-filter').select2({
+      placeholder: 'Začnite písať názov firmy...',
+      allowClear: true,
+      minimumInputLength: 2, // Vyhľadáva až od 2 znakov
+      ajax: {
+        url: '/api/firmy/search',
+        dataType: 'json',
+        delay: 250, // Debounce pre zníženie počtu požiadaviek
+        data: function (params) {
+          console.log(params);
+          return {
+            q: params // Hodnota z vyhľadávacieho poľa
+          };
+        },
+        results: function (data, page) {
+          // Spracovanie odpovede zo servera – musí vrátiť pole objektov s 'id' a 'text'
+          return {
+            results: $.map(data, function (item) {
+              console.log(item);
+              return {
+                id: item.id,
+                text: item.text
+              };
+            })
+          };
+        },
+        cache: true
+      }
+    }).on('change', function () {
+      if ($(this).val()) {
+        $(this).closest('form').submit();
+      }
+    });
+  });
+</script>
+{% endblock %}

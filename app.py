@@ -232,9 +232,9 @@ class ZakazkaView(SecureView):
     }
     
     form_columns = [
-        'ijav_pobocka',
-        'popis',
         'klient',
+        'ijav_pobocka',        
+        'popis',        
         'stav_zakazky',
         'typ_zakazky',
         'termin_dokoncenia'    
@@ -387,7 +387,44 @@ class FirmaView(SecureView):
         'typ': 'Typ firmy'
     }    
 
-    column_filters = ['nazov', 'typ']
+    column_formatters = {
+        # m.typ_firmy.value vráti "IJaV", "Zákazník", "Dodávateľ"
+        'typ': lambda v, c, m, p: m.typ.value if m.typ else ''
+    }
+
+    #column_filters = ['nazov', 'typ']
+    
+    list_template = 'admin/firma_filter_list.html'
+    
+        #vykreaslenie podmienky
+    def render(self, template, **kwargs):
+        #Stav zakazky
+        kwargs['typ_firmy'] = TypFirmy
+        kwargs['current_firma_typ'] = request.args.get('firma_typ', '')
+                
+        # Odovzdáme všetky aktuálne URL args, aby sme ich v HTML vedeli uchovať
+        kwargs['request_args'] = request.args
+        return super().render(template, **kwargs)
+    
+    def get_query(self):
+        """Ovplyvňuje zobrazenie: Filtruje SQL dotaz pre tabuľku."""
+        query = super().get_query()
+        firma_typ = request.args.get('firma_typ')
+        if firma_typ:
+            query = query.filter(Firma.typ == firma_typ)
+        
+        firma_name = request.args.get('firma-name-filter')
+        if firma_name:
+            query = query.filter(Firma.id == firma_name)
+            
+        return query
+
+    @app.route('/api/firmy/search')
+    def search_firmy():
+        q = request.args.get('q', '')
+        firmy = Firma.query.filter(Firma.nazov.ilike(f'%{q}%')).limit(15).all()
+        return jsonify([{'id': f.id, 'text': f.nazov} for f in firmy])
+
     
 # vylepesniue a texty pre ucet
 class UcetView(AdminOnlyView):
@@ -407,7 +444,7 @@ class UcetView(AdminOnlyView):
         'nazov': 'Napr. Hlavný firemný účet alebo Príručná pokladňa',
         'cislo_uctu': 'Vo formáte SK00 0000 0000 0000 0000 0000'
     }
-
+    
 class ZamestnanecView(AdminOnlyView): # Prípadne AdminOnlyView, ak to tak máš
     # 1. Kto tam môže vojsť (bezpečnosť)
     def is_accessible(self):
@@ -505,13 +542,13 @@ admin.add_link(UserMenuLink(name='', url='#', class_name='pull-right float-right
 admin.add_link(MenuLink(name='🔑 Zmena hesla', url='/zmena-hesla', class_name='pull-right float-right'))
 admin.add_link(MenuLink(name='🚪 Odhlásiť sa', url='/logout', class_name='pull-right float-right'))
 
+
 # Vytvorenie databázy pri prvom spustení
 with app.app_context():
     db.create_all()
     init_languages(db.session)
     print("Databáza bola úspešne vytvorená!")
     
-
 
 if __name__ == '__main__':
     # Spustenie vývojového servera
