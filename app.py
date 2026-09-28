@@ -29,7 +29,6 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default-bezpecnostny-kluc')
 # Všimni si, že SQLAlchemy hľadá SQLALCHEMY_DATABASE_URI, my mu priradíme náš DATABASE_URL z .env
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///ijav.db')
 app.config['BABEL_DEFAULT_LOCALE'] = 'sk'
-app.config['FLASK_ADMIN_SWATCH'] = 'flatly'
 
 babel = Babel(app)
 
@@ -57,6 +56,12 @@ login_manager.login_view = 'api.login'
 def load_user(user_id):
     return db.session.get(Zamestnanec, int(user_id))
 
+#formatuje datum pre vsetko
+def date_formatter(view, context, model, name):
+    value = getattr(model, name)
+    if value:
+        return value.strftime('%d.%m.%Y')  # Formát: DD.MM.YYYY HH:MM
+    return ''
 
 ###########################################
 #  zoznam secure view podedenych po Modelviews
@@ -491,7 +496,7 @@ class PokladnaView(SecureView):
         'ucet': 'Účet'        
     }
         
-    column_list = ['popis', 'pohyb', 'hodnota', 'cislo_dokladu', 'timestamp']
+    column_list = ['zakazka', 'popis', 'pohyb', 'hodnota', 'timestamp']
 
     # Alebo povieš, čo jediné z tabuľky vynechať:
     column_exclude_list = ['id_zamestnanca']
@@ -506,12 +511,15 @@ class PokladnaView(SecureView):
             (e.name, e.value) for e in TypPohybu if e != TypPohybu.KONTROLA
         ]
     }
+    
+    column_formatters = {
+        'timestamp': date_formatter
+    }
 
     # 2. Pri vytvorení nového záznamu priradíme ID aktuálne prihláseného používateľa
     def on_model_change(self, form, model, is_created):
         if is_created and current_user and current_user.is_authenticated:
-            model.id_zamestnanca = current_user.id
-            
+            model.id_zamestnanca = current_user.id            
         super().on_model_change(form, model, is_created)
 
 
@@ -520,13 +528,15 @@ class PokladnaView(SecureView):
 admin = Admin(
     app, 
     name='IJaV Kalkulačka', 
-    url='/',                      # Odstráni /admin/ a dá administráciu na hlavnú stránku (http://127.0.0.1:5000/)
+    url='/',                      # Odstráni /admin/ a dá administráciu na hlavnú stránku (http://127.0.0.1:5000/)            
     index_view=SecureAdminIndex(    # Nastaví hlavnú stránku adminu
         name='Domov', 
         url='/',
         menu_class_name='d-none'
     )
 )
+
+
 
 # Pridanie tabuliek do Admin panelu, aby sme ich mohli klikať
 admin.add_view(FirmaView(Firma, db.session, name='Firmy'))
