@@ -268,8 +268,7 @@ class PolozkaView(SecureView):
     # ==========================================
     # 1. BEZPEČNOSŤ A VIDITEĽNOSŤ (MENU)
     # ==========================================
-    def is_visible(self):
-        # Zabezpečí, že sa záložka "Položky" neukáže v hornom menu
+    def is_visible(self, *args, **kwargs):
         return False
         
     column_default_sort = ('id', True)
@@ -542,7 +541,7 @@ admin = Admin(
 admin.add_view(FirmaView(Firma, db.session, name='Firmy'))
 admin.add_view(ZakazkaView(Zakazka, db.session, name='Zákazky'))
 admin.add_view(PolozkaView(Polozka, db.session, name='Položky', endpoint='polozka'))
-
+admin._menu.pop()
 admin.add_view(ZamestnanecView(Zamestnanec, db.session, name='Zamestanci'))
 admin.add_view(PokladnaView(Pokladna, db.session,name='Pokladňa'))
 admin.add_view(UcetView(Ucet, db.session, name='Účty'))
