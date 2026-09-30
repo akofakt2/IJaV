@@ -10,6 +10,11 @@
   <div class="container-fluid">
     <div class="row">
       <div class="col-md-4">
+        <div class="form-group" style="margin: 0;">
+          <input type="hidden" id="firma-name-filter" name="firma-name-filter" style="width: 100%;" />
+        </div>
+      </div>
+      <div class="col-md-4">
         <!-- Filter 2: Firma (Foreign Key) -->
         <div class="form-group" style="margin: 0;">
           <label for="firma_typ_filter" style="margin-right: 5px; font-weight: bold;">Typ firmy:</label>
@@ -23,13 +28,11 @@
           </select>
         </div>
       </div>
+
       <div class="col-md-4">
         <div class="form-group" style="margin: 0;">
-          <input type="hidden" id="firma-name-filter" name="firma-name-filter" style="width: 100%;" />
+          <a href="{{ request.path }}" class="btn btn-default">Vynulovať</a>
         </div>
-      </div>
-      <div class="col-md-4">        
-        <a href="{{ request.path }}" class="btn btn-default btn-sm" style="margin-left: 8px;">Vynulovať</a>        
       </div>
     </div>
   </div>

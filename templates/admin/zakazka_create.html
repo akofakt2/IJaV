@@ -1,50 +1,73 @@
 {% import 'admin/lib.html' as lib with context %}
-{% extends 'admin/model/modals/create.html' %}
+{% extends 'admin/model/create.html' %}
 
 {% block body %}
 <div class="container-fluid">
-  <form action="{{ get_url('.create_view', url=return_url, modal=True) }}" method="POST" enctype="multipart/form-data"
-    class="admin-form form-horizontal">
-    {{ form.hidden_tag() if form.hidden_tag }}
+    <form action="{{ get_url('.create_view', url=return_url, modal=True) }}" method="POST" enctype="multipart/form-data"
+        class="admin-form form-horizontal">
+        {{ form.hidden_tag() if form.hidden_tag }}
+        <div class="row">
+            <div class="col-md-12">{{ lib.render_field(form, form.popis) }}</div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">{{ lib.render_field(form, form.ijav_pobocka) }}</div>
+        </div>
+        <div class="row">
+            <div class="col-md-8">{{ lib.render_field(form, form.klient) }}</div>
+            <div class="col-md-4">
+                <div class="form-group ">
+                    <label class="col-form-label">&nbsp;</label>
+                    <button id="btnNovaFirma" type="button" class="btn btn-success">➕
+                        Vytvoriť novú firmu
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4">{{ lib.render_field(form, form.stav_zakazky) }}</div>
+            <div class="col-md-4">{{ lib.render_field(form, form.typ_zakazky) }}</div>
+            <div class="col-md-4">{{ lib.render_field(form, form.termin_dokoncenia) }}</div>
+        </div>
 
-    <!-- Riadok 1 -->
-    <div class="modal-header">
-      <h2 class="modal-title">{{ form.meno_zakazky or 'Neznáma položka' }}</h2>
-    </div>
-    <div class="row">
-      <div class="col-md-12">{{ lib.render_field(form, form.popis) }}</div>
-    </div>
-
-    <!-- Riadok 2 -->
-    <div class="row">
-      <div class="col-md-12">{{ lib.render_field(form, form.dodavatel) }}</div>
-    </div>
-
-    <!-- Riadok 3 -->
-    <div class="row">
-      <div class="col-md-4">{{ lib.render_field(form, form.typ_prekladu) }}</div>
-      <div class="col-md-4">{{ lib.render_field(form, form.jazyk_z) }}</div>
-      <div class="col-md-4">{{ lib.render_field(form, form.jazyk_do) }}</div>
-    </div>
-
-    <!-- Riadok 4 -->
-    <div class="row">
-      <div class="col-md-6">{{ lib.render_field(form, form.cena) }}</div>
-      <div class="col-md-6">{{ lib.render_field(form, form.naklady) }}</div>
-    </div>
-
-    <!-- Riadok 5 -->
-    <div class="row">
-      <div class="col-md-4">{{ lib.render_field(form, form.stav_platby) }}</div>
-      <div class="col-md-4">{{ lib.render_field(form, form.typ_platby) }}</div>
-      <div class="col-md-4">{{ lib.render_field(form, form.stav_naklady) }}</div>
-    </div>
-
-    <div class="modal-footer" style="padding-bottom: 0; margin-top: 15px; margin-bottom: 15px;">
-      <button type="submit" class="btn btn-primary">Uložiť položku</button>
-      <button type="button" class="btn btn-default" data-dismiss="modal">Zrušiť</button>
-    </div>
-
-  </form>
+        <div class="modal-footer" style="padding-bottom: 0; margin-top: 15px; margin-bottom: 15px;">
+            <button type="submit" class="btn btn-primary">Uložiť zakázku</button>
+            <a type="button" class="btn btn-default" href="{{ url_for('zakazka.index_view') }}">Zrušiť</a>
+        </div>
+    </form>
 </div>
+
+
+{% endblock %}
+
+{% block tail %}
+{{ super() }}
+<div class="modal fade" id="modalCreateFirma" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <!-- Obsah z URL sa načíta sem -->
+        </div>
+    </div>
+</div>
+<script>
+    $(document).ready(function () {
+        $('#btnNovaFirma').on('click', function (e) {
+            e.preventDefault(); // Zabráni akejkoľvek predvolenej akcii
+
+            var url = "{{ url_for('firma.create_view', modal=True) }}";
+            
+
+            // Načítanie obsahu z URL do tela modalu a jeho zobrazenie
+            $('#modalCreateFirma .modal-content').load(url, function () {
+                $('#modalCreateFirma').modal('show');
+            });
+        });
+
+        $('#cancelModal').on('click', function (e) {
+            console.log('aaa');
+            $('#modalCreateFirma').modal('hide');
+        });
+    });
+
+
+</script>
 {% endblock %}

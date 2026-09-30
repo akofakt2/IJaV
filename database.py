@@ -79,6 +79,9 @@ class Firma(db.Model):
     zip_code: Mapped[str] = mapped_column(String(10), nullable=True)
     ico: Mapped[str] = mapped_column(String(10), nullable=True)
     dic: Mapped[str] = mapped_column(String(10), nullable=True)
+    # Pridané nepovinné polia
+    telefon: Mapped[str] = mapped_column(String(50), nullable=True)
+    email: Mapped[str] = mapped_column(String(120), nullable=True)
     typ: Mapped[TypFirmy] = mapped_column(nullable=False, default=TypFirmy.ZAKAZNIK)
     def __str__(self):
         return self.nazov
@@ -140,7 +143,7 @@ class Zakazka(db.Model):
     # 2. PrimaryJoin pre Zákazníka
     klient: Mapped["Firma"] = relationship(
         primaryjoin="and_(Zakazka.id_zakaznika == Firma.id, Firma.typ == 'ZAKAZNIK')",
-        foreign_keys=[id_zakaznika]
+        foreign_keys=[id_zakaznika]        
     )        
     def __str__(self):
         return f"{self.popis}"
