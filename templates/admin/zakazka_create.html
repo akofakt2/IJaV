@@ -17,9 +17,11 @@
             <div class="col-md-4">
                 <div class="form-group ">
                     <label class="col-form-label">&nbsp;</label>
-                    <button id="btnNovaFirma" type="button" class="btn btn-success">➕
+                    <a id="btnNovaFirma" data-target="#modalCreateFirma"
+                        href="{{ url_for('firma.create_view', modal=True) }}" class="btn btn-success"
+                        data-toggle="modal">➕
                         Vytvoriť novú firmu
-                    </button>
+                    </a>
                 </div>
             </div>
         </div>
@@ -35,16 +37,14 @@
         </div>
     </form>
 </div>
-
-
 {% endblock %}
 
 {% block tail %}
 {{ super() }}
-<div class="modal fade" id="modalCreateFirma" tabindex="-1" role="dialog">
+<div class="modal fade" id="modalCreateFirma" tabindex="-1" role="dialog" aria-labelledby="fa_modal_label"
+    aria-modal="true">
     <div class="modal-dialog modal-xl" role="document">
         <div class="modal-content">
-            <!-- Obsah z URL sa načíta sem -->
         </div>
     </div>
 </div>
@@ -54,19 +54,72 @@
             e.preventDefault(); // Zabráni akejkoľvek predvolenej akcii
 
             var url = "{{ url_for('firma.create_view', modal=True) }}";
-            
 
             // Načítanie obsahu z URL do tela modalu a jeho zobrazenie
             $('#modalCreateFirma .modal-content').load(url, function () {
                 $('#modalCreateFirma').modal('show');
+
+                // 2. Naviažeme click priamo po načítaní HTML do DOMu
+                $('#modalCreateFirma').off('click', '.btn-primary, [type="submit"]');
+                $('#modalCreateFirma').on('click', '.btn-primary, [type="submit"]', function (e) {
+
+                    var formElement = document.querySelector('#modalCreateFirma form');
+                    if (!formElement) return;
+
+                    // Zastavíme štandardný submit
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    // 3. HTML5 validácia
+                    if (formElement.checkValidity && !formElement.checkValidity()) {
+                        formElement.reportValidity();
+                        return false;
+                    }
+
+                    // 4. AJAX Uloženie
+                    var formData = new FormData(formElement);
+
+                    $.ajax({
+                        url: "{{ url_for('firma.ajax_create') }}",
+                        type: formElement.getAttribute('method') || 'POST',
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        success: function (response) {
+                            if (response.success) {                                
+                                // TU MÔŽEŠ POUŽIŤ DÁTA (napr. doplniť novú firmu do Select2)
+                                document.activeElement.blur();
+
+                                const firmaSelect = $('#klient');
+                                const newOption = new Option(response.nazov, response.id, true, true);
+                                firmaSelect.append(newOption).trigger('change').trigger('change.select2');
+                                
+                                $('#modalCreateFirma').modal('hide');
+                                $('.modal-backdrop').remove();
+                                $('body').removeClass('modal-open').css('padding-right', '');
+                                
+                            } else {
+                                alert('Chyba: ' + (response.error || 'Nepodarilo sa uložiť firmu.'));
+                            }
+                        },
+                        error: function (xhr, status, error) {
+                            alert('Chyba pri AJAX požiadavke: ' + error);
+                        }
+                    });
+                });
             });
         });
 
         $('#cancelModal').on('click', function (e) {
-            console.log('aaa');
+            document.activeElement.blur();
+            // Až potom zatvor modál (príklad pre Bootstrap)
             $('#modalCreateFirma').modal('hide');
         });
     });
+
 
 
 </script>

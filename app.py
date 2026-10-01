@@ -257,7 +257,39 @@ class FirmaView(SecureView):
             query = query.filter(Firma.id == firma_name)
             
         return query
+    
+    # Nový vlastný endpoint pre AJAX vytváranie
+    @expose('/ajax_create/', methods=['POST'])
+    def ajax_create(self):
+        # 1. Vytvoríme formulár pre tento model
+        form = self.create_form()
 
+        # 2. Skontrolujeme validáciu
+        if form.validate():
+            try:
+                # 1. Vytvoríme novú inštanciu modelu z formulára
+                model = self.model()
+                form.populate_obj(model)
+
+                # 2. Pridáme do session a spravíme commit
+                self.session.add(model)
+                self.session.commit()  # SQLAlchemy tu automaticky doplní `model.id`
+
+                # 3. Vrátime vygenerované ID a názov
+                return jsonify({
+                    'success': True,
+                    'id': model.id,
+                    'nazov': getattr(model, 'nazov', str(model))
+                })
+
+            except Exception as ex:
+                self.session.rollback()
+                return jsonify({'success': False, 'error': str(ex)}), 400
+        
+        else:
+            # Ak neprešla validácia WTForms (napr. chýbajúce povinné pole)
+            return jsonify({'success': False, 'errors': form.errors}), 400
+    
     @app.route('/api/firmy/search')
     def search_firmy():
         q = request.args.get('q', '')
@@ -389,7 +421,7 @@ admin = Admin(
 admin.add_view(ZakazkaView(Zakazka, db.session, name='Zákazky'))
 admin.add_view(PolozkaView(Polozka, db.session, name='Položky', endpoint='polozka'))
 admin._menu.pop()
-admin.add_view(FirmaView(Firma, db.session, name='Firmy'))
+admin.add_view(FirmaView(Firma, db.session, name='Firmy', endpoint='firma'))
 admin.add_view(PokladnaView(Pokladna, db.session,name='Pokladňa'))
 admin.add_view(ZamestnanecView(Zamestnanec, db.session, name='Zamestanci'))
 admin.add_view(UcetView(Ucet, db.session, name='Účty'))
