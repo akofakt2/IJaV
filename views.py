@@ -1,10 +1,10 @@
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_admin import Admin, AdminIndexView, expose
 from flask_admin.contrib.sqla import ModelView
-from database import db, Firma, Zakazka,  TypFirmy,  StavZakazky
+from database import db, Firma, Zakazka,  TypFirmy,  StavZakazky, Polozka
 from flask import Flask, request, redirect, url_for, flash, render_template, render_template_string, jsonify, Blueprint
 from markupsafe import Markup
-
+from flask_admin.model.form import InlineFormAdmin
 
 #formatuje datum pre vsetko
 def date_formatter(view, context, model, name):    
@@ -43,12 +43,30 @@ class AdminOnlyView(SecureView):  # Dedi zo SecureView -> zdedí aj inaccessible
         # Skontroluje prihlásenie zo SecureView + overí admin rolu
         return super().is_accessible() and getattr(current_user, 'admin', False)
 
+class PolozkaInlineForm(InlineFormAdmin):
+    # Stĺpce, ktoré sa budú zobrazovať v tabuľke položiek pri editácii
+    form_columns = ['id','popis', 'typ_prekladu', 'jazyk_z', 'jazyk_do','cena', 'naklady','stav_platby','stav_naklady']
+    column_labels = {
+        'popis': 'Popis',
+        'typ_prekladu': 'Typ prekladu',
+        'jazyk_prekladu': 'Preklad',        
+        'cena': 'Predajná cena (€)',
+        'naklady': 'Náklady (€)',
+        'stav_platby': 'Stav platby',
+        'stav_naklady': 'Stav náklady',
+        'dodavatel': 'Dodávateľ'        
+    }  
+    
+    form_create_rules = ['popis', 'typ_prekladu', 'jazyk_z', 'jazyk_do','cena', 'naklady','stav_platby','stav_naklady']
+
+    # 2. Pri editácii ZÁKAZKY inline položky zobrazíme:
+    form_edit_rules = ['popis', 'stav_platby','stav_naklady']
 
 # 2. Hlavné nastavenie pre Zákazku
 class ZakazkaView(SecureView):
     # Pomenujeme šablónu podľa tabuľky
     list_template = 'admin/zakazka_filter_list.html'
-    
+        
     #vykreaslenie podmienky
     def render(self, template, **kwargs):
         #Stav zakazky
@@ -111,11 +129,10 @@ class ZakazkaView(SecureView):
     )
     
     # 1. Zobrazíme v tabuľke stĺpce + náš nový stĺpec 'akcie'
-    column_list = ('id','popis', 'ijav_pobocka', 'klient', 'stav_zakazky', 'typ_zakazky', 'termin_dokoncenia', 'akcie')
+    column_list = ('popis', 'ijav_pobocka', 'klient', 'stav_zakazky', 'typ_zakazky', 'termin_dokoncenia', 'akcie')
 
     # 2. Pekné slovenské názvy
-    column_labels = {
-        'id': 'ID',
+    column_labels = {        
         'ijav_pobocka': 'Pobočka',
         'klient': 'Klient',
         'stav_zakazky': 'Stav zákazky',
@@ -129,8 +146,13 @@ class ZakazkaView(SecureView):
     def get_klienti():
         return Firma.query.filter_by(typ='ZAKAZNIK').all()
     
+    create_modal = False
     create_template = 'admin/zakazka_create.html'
-    edit_template = 'admin/zakazka_edit.html'
+    #edit_template = 'admin/zakazka_edit.html'
+    
+    edit_modal = True
+    edit_modal_template = 'admin/zakazka_edit.html'
+
     
     form_widget_args = {
         'zamestnanec': {'required': False},
@@ -192,4 +214,24 @@ class ZakazkaView(SecureView):
     }
 
 
+    def on_form_prefill(self, form, id):
+        super().on_form_prefill(form, id)
+        # Nastaví ho ako neupraviteľný len v Edit
+        form.ijav_pobocka.render_kw = {
+            'style': 'pointer-events: none; background-color: #e9ecef;',
+            'tabindex': '-1',
+            'aria-disabled': 'true'
+        }
+        form.klient.render_kw = {
+            'style': 'pointer-events: none; background-color: #e9ecef;',
+            'tabindex': '-1',
+            'aria-disabled': 'true'
+        }
 
+
+    def get_save_return_url(self, model, is_created=False, **kwargs):
+        if is_created:
+            # Presmerovanie na akúkoľvek inú route vo vašej Flask aplikácii
+            return url_for('polozka.index_view', zakazka_id=model.id)
+            
+        return super().get_save_return_url(model, is_created=is_created, **kwargs)

@@ -1,57 +1,64 @@
 {% extends 'admin/model/list.html' %}
-
+{{ lib.add_modal_window(modal_id='fa_modal') }}
+{{ lib.add_modal_window(modal_id='fa_modal_edit') }}
 {% block body %}
 {% if aktualna_zakazka %}
-<div class="container-fluid">
-    <div class="well well-sm"
-        style="background-color: #f5f5f5; border: 1px solid #e3e3e3; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
-        <h3 style="margin-top: 0; color: #337ab7;">
-            📋 {{ aktualna_zakazka.id }} {{ aktualna_zakazka.popis }}
-            <small>({{ aktualna_zakazka.typ_zakazky.value }})</small>
-        </h3>
-        <hr style="margin: 10px 0;">
-        {% if aktualna_zakazka.popis %}
-        <div style="margin-top: 10px;">
-            <strong>Poznámka:</strong> <em>{{ aktualna_zakazka.popis }}</em>
+<div class="container-fluid" style="font-size: 1.1em;">
+    <h3 style="margin-top: 0; color: #337ab7;">
+        📋 {{ aktualna_zakazka.id }} {{ aktualna_zakazka.popis }}
+        <small>({{ aktualna_zakazka.typ_zakazky.value }})</small>
+    </h3>
+    <hr style="margin: 10px 0;">
+    {% if aktualna_zakazka.popis %}
+    <div style="margin-top: 10px;">
+        <strong>Názov zákazky:</strong> <em>{{ aktualna_zakazka.popis }}</em>
+    </div>
+    {% endif %}
+    <div class="row">
+        <div class="col-md-3"><b>Cena zákazky</b></div>
+        <div class="col-md-3">{{ suma_cena }} €</div>
+        <div class="col-md-3"><b>Náklady zákazky</b></div>
+        <div class="col-md-3">{{ suma_naklady }} €</div>
+    </div>
+    <div class="row">
+        <div class="col-md-3">
+            <strong>Pobočka IJaV:</strong>
         </div>
-        {% endif %}
-        <div class="row">
-            <div class="col-md-3">Cena zákazky</div>
-            <div class="col-md-3"><b>{{ suma_cena }} €</b></div>
-            <div class="col-md-3">Náklady zákazky</div>
-            <div class="col-md-3"><b>{{ suma_naklady }} €</b></div>
+        <div class="col-md-3">
+            {{ aktualna_zakazka.ijav_pobocka.nazov if aktualna_zakazka.ijav_pobocka else '-' }}
         </div>
-        <div class="row">
-            <div class="col-md-3">
-                <strong>Pobočka IJaV:</strong> 
-            </div>
-            <div class="col-md-3">
-                {{ aktualna_zakazka.ijav_pobocka.nazov if aktualna_zakazka.ijav_pobocka else '-' }}
-            </div>
-            <div class="col-md-3">
-                <strong>Klient:</strong>
-            </div>
-            <div class="col-md-3">
-                {{ aktualna_zakazka.klient.nazov if aktualna_zakazka.klient else '-' }}
-            </div>
+        <div class="col-md-3">
+            <strong>Klient:</strong>
         </div>
-        <div class="row">
-            <div class="col-md-3">
-                <strong>Stav:</strong> 
-            </div>
-            <div class="col-md-3">
-                <span class="label label-info">{{ aktualna_zakazka.stav_zakazky.value }}</span>
-            </div>
-            <div class="col-md-3">
-                <strong>Termín:</strong> 
-            </div>
-            <div class="col-md-3">
-                {{ aktualna_zakazka.termin_dokoncenia.strftime('%d.%m.%Y') if aktualna_zakazka.termin_dokoncenia else 'Nenastavený' }}
-            </div>
+        <div class="col-md-3">
+            {{ aktualna_zakazka.klient.nazov if aktualna_zakazka.klient else '-' }}
         </div>
     </div>
+    <div class="row">
+        <div class="col-md-3">
+            <strong>Stav:</strong>
+        </div>
+        <div class="col-md-3">
+            <span class="label label-info">{{ aktualna_zakazka.stav_zakazky.value }}</span>
+        </div>
+        <div class="col-md-3">
+            <strong>Termín:</strong>
+        </div>
+        <div class="col-md-3">
+            {{ aktualna_zakazka.termin_dokoncenia.strftime('%d.%m.%Y') if aktualna_zakazka.termin_dokoncenia else
+            'Nenastavený' }}
+        </div>
+    </div>
+    <div class="form-group" style="text-align: right; padding-right: 10px;">
+        <!--<button type="button" class="btn btn-primary btn-md"
+            onclick="openEditModal('{{ url_for('zakazka.edit_view', id=request.args.get('zakazka_id'), url=request.full_path, modal=True) }}')"
+            title="Upraviť zákazku">
+            Upraviť zákazku
+        </button>-->
+        <a class="btn btn-danger btn-md" href="{{ url_for('zakazka.index_view') }}">Späť</a>
+    </div>
 </div>
-
+<hr>
 {% endif %}
 
 {{ super() }}

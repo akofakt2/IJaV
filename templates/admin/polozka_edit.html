@@ -2,14 +2,17 @@
 {% extends 'admin/model/modals/edit.html' %}
 
 {% block body %}
-<div class="container-fluid">
-  <form action="{{ get_url('.edit_view', id=request.args.get('id'), url=return_url, modal=True) }}" method="POST"
-    enctype="multipart/form-data" class="admin-form form-horizontal">
-    {{ form.hidden_tag() if form.hidden_tag }}
+<div class="modal-header">
+  <h5 class="modal-title">Nový položka</h5>
+</div>
+<div class="modal-body">
+<form action="{{ get_url('.edit_view', id=request.args.get('id'), url=return_url, modal=True) }}" method="POST"
+  enctype="multipart/form-data" class="admin-form">
+  {{ form.hidden_tag() if form.hidden_tag }}
 
-    <!-- Riadok 1 -->
-    <div class="modal-header">
-      <h2 class="modal-title">{{ form.meno_zakazky or 'Neznáma položka' }}</h2>
+  <!-- Riadok 1 -->
+  <div class="row">
+    <div class="col-md-12"><b>Zakázka: </b>{{ form.meno_zakazky or 'Neznáma položka' }}</h2>
     </div>
     <div class="row">
       <div class="col-md-12">{{ lib.render_field(form, form.popis) }}</div>
@@ -42,8 +45,8 @@
 
     <div class="modal-footer" style="padding-bottom: 0; margin-top: 15px; margin-bottom: 15px;">
       <button type="submit" class="btn btn-primary">Uložiť položku</button>
-      <button type="button" class="btn btn-default" data-dismiss="modal">Zrušiť</button>
+      <button type="button" class="btn btn-danger" data-dismiss="modal">Zrušiť</button>
     </div>
-  </form>
+</form>
 </div>
 {% endblock %}

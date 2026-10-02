@@ -2,47 +2,51 @@
 {% extends 'admin/model/create.html' %}
 
 {% block body %}
-<div class="container-fluid">
+<div class="modal-header">
+    <h5 class="modal-title">Nová zákazka</h5>
+</div>
+<div class="modal-body">
     <form action="{{ get_url('.create_view', url=return_url, modal=True) }}" method="POST" enctype="multipart/form-data"
         class="admin-form form-horizontal">
-        {{ form.hidden_tag() if form.hidden_tag }}
-        <div class="row">
-            <div class="col-md-12">{{ lib.render_field(form, form.popis) }}</div>
-        </div>
-        <div class="row">
-            <div class="col-md-12">{{ lib.render_field(form, form.ijav_pobocka) }}</div>
-        </div>
-        <div class="row">
-            <div class="col-md-8">{{ lib.render_field(form, form.klient) }}</div>
-            <div class="col-md-4">
-                <div class="form-group ">
-                    <label class="col-form-label">&nbsp;</label>
-                    <a id="btnNovaFirma" data-target="#modalCreateFirma"
-                        href="{{ url_for('firma.create_view', modal=True) }}" class="btn btn-success"
-                        data-toggle="modal">➕
-                        Vytvoriť novú firmu
-                    </a>
+        <fieldset>
+            {{ form.hidden_tag() if form.hidden_tag }}
+            <div class="row">
+                <div class="col-md-12">{{ lib.render_field(form, form.popis) }}</div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">{{ lib.render_field(form, form.ijav_pobocka) }}</div>
+            </div>
+            <div class="row">
+                <div class="col-md-8">{{ lib.render_field(form, form.klient) }}</div>
+                <div class="col-md-4">
+                    <div class="form-group ">
+                        <label class="col-form-label">&nbsp;</label>
+                        <a id="btnNovaFirma" data-target="#modalCreateFirma"
+                            href="{{ url_for('firma.create_view', modal=True) }}" class="btn btn-success"
+                            data-toggle="modal">➕
+                            Vytvoriť novú firmu
+                        </a>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="row">
-            <div class="col-md-4">{{ lib.render_field(form, form.stav_zakazky) }}</div>
-            <div class="col-md-4">{{ lib.render_field(form, form.typ_zakazky) }}</div>
-            <div class="col-md-4">{{ lib.render_field(form, form.termin_dokoncenia) }}</div>
-        </div>
-
-        <div class="modal-footer" style="padding-bottom: 0; margin-top: 15px; margin-bottom: 15px;">
-            <button type="submit" class="btn btn-primary">Uložiť zakázku</button>
-            <a type="button" class="btn btn-default" href="{{ url_for('zakazka.index_view') }}">Zrušiť</a>
-        </div>
+            <div class="row">
+                <div class="col-md-4">{{ lib.render_field(form, form.stav_zakazky) }}</div>
+                <div class="col-md-4">{{ lib.render_field(form, form.typ_zakazky) }}</div>
+                <div class="col-md-4">{{ lib.render_field(form, form.termin_dokoncenia) }}</div>
+            </div>
+            <hr>
+            <div class="form-group" style="text-align: right; padding-right: 10px;">
+                <button type="submit" class="btn btn-primary">Uložiť zakázku</button>
+                <a class="btn btn-danger" href="{{ return_url or url_for('.index_view') }}">Späť</a>
+            </div>
+        </fieldset>
     </form>
 </div>
 {% endblock %}
 
 {% block tail %}
 {{ super() }}
-<div class="modal fade" id="modalCreateFirma" tabindex="-1" role="dialog" aria-labelledby="fa_modal_label"
-    aria-modal="true">
+<div class="modal" id="modalCreateFirma" tabindex="-1" role="dialog" aria-labelledby="fa_modal_label" aria-modal="true">
     <div class="modal-dialog modal-xl" role="document">
         <div class="modal-content">
         </div>
@@ -56,8 +60,8 @@
             var url = "{{ url_for('firma.create_view', modal=True) }}";
 
             // Načítanie obsahu z URL do tela modalu a jeho zobrazenie
-            $('#modalCreateFirma .modal-content').load(url, function () {
-                $('#modalCreateFirma').modal('show');
+            $('.modal-content').load(url, function () {
+                //$('#modalCreateFirma').modal('show');
 
                 // 2. Naviažeme click priamo po načítaní HTML do DOMu
                 $('#modalCreateFirma').off('click', '.btn-primary, [type="submit"]');
@@ -89,18 +93,18 @@
                             'X-Requested-With': 'XMLHttpRequest'
                         },
                         success: function (response) {
-                            if (response.success) {                                
+                            if (response.success) {
                                 // TU MÔŽEŠ POUŽIŤ DÁTA (napr. doplniť novú firmu do Select2)
                                 document.activeElement.blur();
 
                                 const firmaSelect = $('#klient');
                                 const newOption = new Option(response.nazov, response.id, true, true);
                                 firmaSelect.append(newOption).trigger('change').trigger('change.select2');
-                                
+
                                 $('#modalCreateFirma').modal('hide');
                                 $('.modal-backdrop').remove();
                                 $('body').removeClass('modal-open').css('padding-right', '');
-                                
+
                             } else {
                                 alert('Chyba: ' + (response.error || 'Nepodarilo sa uložiť firmu.'));
                             }

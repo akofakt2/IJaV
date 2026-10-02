@@ -8,6 +8,8 @@ from flask_admin.menu import MenuLink
 from flask_admin.contrib.sqla import ModelView
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_admin.model.form import InlineFormAdmin
+from flask_admin.theme import Bootstrap4Theme
+
 from flask_babel import Babel
 from flask_migrate import Migrate
 
@@ -97,6 +99,7 @@ class PolozkaView(SecureView):
     create_modal_template = 'admin/polozka_create.html'
     edit_modal_template = 'admin/polozka_edit.html'
     
+    
     # ==========================================
     # 1. BEZPEČNOSŤ A VIDITEĽNOSŤ (MENU)
     # ==========================================
@@ -155,9 +158,22 @@ class PolozkaView(SecureView):
         }
     }
             
+            
     # Automatické predvyplnenie zákazky z URL parametra zakazka_id
     def create_form(self, obj=None):
         form = super().create_form(obj)                
+        
+        if hasattr(form, 'dodavatel'):
+            
+            form.dodavatel.query_factory = lambda: db.session.query(Firma).filter(
+                Firma.typ == 'DODAVATEL'
+            ).all()
+            form.dodavatel.allow_blank = True
+            form.dodavatel.blank_text = '-- Vyberte dodávateľa --'
+            
+            if request.method == 'GET':
+                form.dodavatel.data = None
+        
         # Získanie zakazka_id z URL
         return_url = request.args.get('url') or request.referrer or ''
         parsed_url = urlparse(return_url)
@@ -317,6 +333,10 @@ class UcetView(AdminOnlyView):
     }
     
 class ZamestnanecView(AdminOnlyView): # Prípadne AdminOnlyView, ak to tak máš
+    
+    create_modal = True
+    edit_modal = True
+    
     # 1. Kto tam môže vojsť (bezpečnosť)
     def is_accessible(self):
         return current_user.is_authenticated and current_user.admin
@@ -413,8 +433,14 @@ admin = Admin(
         name='Domov', 
         url='/',
         menu_class_name='d-none'
-    )
+    ),
+    theme=Bootstrap4Theme()
 )
+
+class JazykView(SecureView):
+    create_modal = True
+    edit_modal = True
+
 
 # Pridanie tabuliek do Admin panelu, aby sme ich mohli klikať
 
@@ -425,7 +451,7 @@ admin.add_view(FirmaView(Firma, db.session, name='Firmy', endpoint='firma'))
 admin.add_view(PokladnaView(Pokladna, db.session,name='Pokladňa'))
 admin.add_view(ZamestnanecView(Zamestnanec, db.session, name='Zamestanci'))
 admin.add_view(UcetView(Ucet, db.session, name='Účty'))
-admin.add_view(SecureView(Jazyk, db.session, name='Jazyky'))
+admin.add_view(JazykView(Jazyk, db.session, name='Jazyky'))
 
 admin.add_link(UserMenuLink(name='', url='#', class_name='pull-right float-right'))
 admin.add_link(MenuLink(name='🔑 Zmena hesla', url='/zmena-hesla', class_name='pull-right float-right'))
@@ -437,8 +463,8 @@ with app.app_context():
     db.create_all()
     init_languages(db.session)
     print("Databáza bola úspešne vytvorená!")
-    migrate = Migrate(app, db)
-    print("Databáza bola úspešne modifikovana!")
+    #migrate = Migrate(app, db)
+    #print("Databáza bola úspešne modifikovana!")
     
 
 if __name__ == '__main__':

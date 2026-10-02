@@ -1,4 +1,5 @@
 import enum
+from typing import Optional
 from datetime import datetime, date, timezone
 from decimal import Decimal
 from flask_sqlalchemy import SQLAlchemy
@@ -112,7 +113,7 @@ class Jazyk(db.Model):
     nazov: Mapped[str] = mapped_column(String(100), nullable=False)           # Názov (Slovenčina, Angličtina...)
 
     def __str__(self):
-        return f"{self.kod}"
+        return self.kod
 
 # ==========================================
 # 3. BIZNIS LOGIKA (ZÁKAZKY A POLOŽKY)
@@ -177,10 +178,12 @@ class Polozka(db.Model):
         primaryjoin="and_(Polozka.id_dodavatel == Firma.id, Firma.typ == 'DODAVATEL')",
         foreign_keys=[id_dodavatel]
     )
-
-    # RELÁCIE NA JAZYKY
-    jazyk_z: Mapped["Jazyk"] = relationship(foreign_keys=[id_jazyk_z])
-    jazyk_do: Mapped["Jazyk"] = relationship(foreign_keys=[id_jazyk_do])
+    
+    id_jazyk_z: Mapped[Optional[int]] = mapped_column(ForeignKey('jazyk.id'))
+    id_jazyk_do: Mapped[Optional[int]] = mapped_column(ForeignKey('jazyk.id'))
+    
+    jazyk_z: Mapped[Optional['Jazyk']] = relationship('Jazyk', foreign_keys=[id_jazyk_z])
+    jazyk_do: Mapped[Optional['Jazyk']] = relationship('Jazyk', foreign_keys=[id_jazyk_do])
     
     def __str__(self):
         return f"{self.popis} ({self.typ_zakazky})"
