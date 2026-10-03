@@ -203,10 +203,9 @@ class ZakazkaView(SecureView):
         super().on_model_change(form, model, is_created)
 
     # 3. Tlačidlo, ktoré vygeneruje odkaz na samostatnú stránku položiek
-    def _akcie_formatter(view, context, model, name):
-        url = url_for('polozka.index_view', zakazka_id=model.id)
+    def _akcie_formatter(view, context, model, name):        
         pocet_poloziek = len(model.polozky) if model.polozky else 0
-        return Markup(f'<a class="btn btn-xs btn-primary" href="{url}">📋 Zobraziť položky ({pocet_poloziek})</a>')
+        return Markup(f'{pocet_poloziek}')
 
     column_formatters = {
         'akcie': _akcie_formatter,

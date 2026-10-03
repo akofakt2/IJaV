@@ -1,6 +1,9 @@
 {% extends 'admin/model/list.html' %}
-{{ lib.add_modal_window(modal_id='fa_modal') }}
-{{ lib.add_modal_window(modal_id='fa_modal_edit') }}
+
+{% block list_row_actions %}
+  {# Ponechajte prázdne alebo sem vložte len vaše vlastné tlačidlá #}
+{% endblock %}
+
 {% block body %}
 {% if aktualna_zakazka %}
 <div class="container-fluid" style="font-size: 1.1em;">
@@ -9,11 +12,6 @@
         <small>({{ aktualna_zakazka.typ_zakazky.value }})</small>
     </h3>
     <hr style="margin: 10px 0;">
-    {% if aktualna_zakazka.popis %}
-    <div style="margin-top: 10px;">
-        <strong>Názov zákazky:</strong> <em>{{ aktualna_zakazka.popis }}</em>
-    </div>
-    {% endif %}
     <div class="row">
         <div class="col-md-3"><b>Cena zákazky</b></div>
         <div class="col-md-3">{{ suma_cena }} €</div>
@@ -50,11 +48,10 @@
         </div>
     </div>
     <div class="form-group" style="text-align: right; padding-right: 10px;">
-        <!--<button type="button" class="btn btn-primary btn-md"
-            onclick="openEditModal('{{ url_for('zakazka.edit_view', id=request.args.get('zakazka_id'), url=request.full_path, modal=True) }}')"
-            title="Upraviť zákazku">
+        <a href="{{ url_for('zakazka.edit_view', id=aktualna_zakazka.id, url=request.full_path, modal=True) }}" class="btn btn-primary btn-md"
+            data-toggle="modal" data-target="#fa_modal_window">
             Upraviť zákazku
-        </button>-->
+        </a>
         <a class="btn btn-danger btn-md" href="{{ url_for('zakazka.index_view') }}">Späť</a>
     </div>
 </div>
@@ -62,4 +59,14 @@
 {% endif %}
 
 {{ super() }}
+{% endblock %}
+{% block tail_js %}
+{{ super() }}
+<script>
+    $(document).ready(function () {
+        if ($.fn.editable) {
+            $.fn.editable.defaults.mode = 'inline';
+        }
+    });
+</script>
 {% endblock %}

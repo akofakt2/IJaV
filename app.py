@@ -93,12 +93,12 @@ class PolozkaView(SecureView):
     # ==========================================
     # Otvárať formuláre v pop-up okne namiesto novej stránky
     create_modal = True
-    edit_modal = True
+    #edit_modal = True
         
     # Pre modálne okná MUSÍŠ použiť premenné s '_modal_':
     create_modal_template = 'admin/polozka_create.html'
-    edit_modal_template = 'admin/polozka_edit.html'
     
+    can_edit = True          # Odstráni tlačidlo/ikonu Edit z riadku
     
     # ==========================================
     # 1. BEZPEČNOSŤ A VIDITEĽNOSŤ (MENU)
@@ -112,7 +112,7 @@ class PolozkaView(SecureView):
     # 2. ZOBRAZENIE (TABUĽKA - ZOZNAM POLOŽIEK)
     # ==========================================
     # Ktorá šablóna sa použije na vykreslenie celej stránky
-    list_template = 'polozka_list.html'
+    list_template = 'admin/polozka_list.html'
 
     # PRESNÝ zoznam stĺpcov, ktoré chceš v tabuľke vidieť (týmto zaručíš, 
     # že tam nebude strašiť stĺpec Zákazka ani iné nechcené relácie)
@@ -126,6 +126,8 @@ class PolozkaView(SecureView):
         'stav_platby',
         'stav_naklady'        
     )
+
+    column_editable_list = ['popis', 'stav_platby', 'stav_naklady']
 
     # Ako sa budú stĺpce volať v hlavičke tabuľky a vo formulároch
     column_labels = {
@@ -217,8 +219,10 @@ class PolozkaView(SecureView):
         return_url = request.args.get('url')
         parsed_url = urlparse(return_url)
         parsed_query = parse_qs(parsed_url.query)
-        zakazka_id = parsed_query['zakazka_id'][0]          
-        model.id_zakazky = zakazka_id
+        
+        if parsed_query:
+            zakazka_id = parsed_query['zakazka_id'][0]
+            model.id_zakazky = zakazka_id
 
         if is_created and not model.id_zamestnanca:
             model.id_zamestnanca = current_user.id
