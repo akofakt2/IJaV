@@ -135,6 +135,7 @@ class Zakazka(db.Model):
     zamestnanec: Mapped["Zamestnanec"] = relationship()
     polozky: Mapped[list["Polozka"]] = relationship(back_populates="zakazka", cascade="all, delete-orphan")
     
+    
     # 1. PrimaryJoin pre IJaV pobočku
     ijav_pobocka: Mapped["Firma"] = relationship(
         primaryjoin="and_(Zakazka.id_firma == Firma.id, Firma.typ == 'IJAV')",

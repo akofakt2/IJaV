@@ -53,3 +53,14 @@
 {% block list_row_actions scoped %}
   <a class="icon" href="{{ url_for('polozka.index_view', zakazka_id=row.id) }}"><span class="fa fa-pencil glyphicon glyphicon-pencil"></span></a>
 {% endblock %}
+
+{% block tail_js %}
+{{ super() }}
+<script>
+    $(document).ready(function () {
+        if ($.fn.editable) {
+            $.fn.editable.defaults.mode = 'inline';
+        }
+    });
+</script>
+{% endblock %}

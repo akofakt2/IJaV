@@ -1,10 +1,11 @@
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_admin import Admin, AdminIndexView, expose
 from flask_admin.contrib.sqla import ModelView
-from database import db, Firma, Zakazka,  TypFirmy,  StavZakazky, Polozka
+from database import db, Firma, Zakazka,  TypFirmy,  StavZakazky, Polozka, enum
 from flask import Flask, request, redirect, url_for, flash, render_template, render_template_string, jsonify, Blueprint
 from markupsafe import Markup
 from flask_admin.model.form import InlineFormAdmin
+from sqlalchemy import func
 
 #formatuje datum pre vsetko
 def date_formatter(view, context, model, name):    
@@ -12,6 +13,14 @@ def date_formatter(view, context, model, name):
     if value:            
         return value.strftime('%d.%m.%Y')
     return ''
+
+#formatuje enum pre vsetko
+def enum_formatter(view, context, model, name):
+    val = getattr(model, name)
+    # Ak je to objekt Enumu, vrátime jeho hodnotu (.value)
+    if isinstance(val, enum.Enum):
+        return val.value
+    return val
 
 ###########################################
 #  zoznam secure view podedenych po Modelviews
@@ -25,6 +34,33 @@ class SecureAdminIndex(AdminIndexView):
     
     def inaccessible_callback(self, name, **kwargs):
         return redirect(url_for('api.login', next=request.url))
+    
+    #hlavna stranka so statisitkami
+    @expose('/')
+    def index(self):
+        # 1. Spočítanie zákaziek podľa stavu z DB
+        stats_raw = (
+            db.session.query(Zakazka.stav_zakazky, func.count(Zakazka.id))
+            .group_by(Zakazka.stav_zakazky)
+            .all()
+        )
+
+        # 2. Prevod na prehľadný slovník {'Nová': 5, 'V riešení': 12, ...}
+        stats = {}
+        for stav, count in stats_raw:
+            val = stav.value if hasattr(stav, 'value') else stav
+            stats[val] = count
+
+        # Doplnenie stavov s 0 zákazkami
+        for stav in StavZakazky:
+            val = stav.value if hasattr(stav, 'value') else stav
+            if val not in stats:
+                stats[val] = 0
+
+        total_count = sum(stats.values())        
+
+        # 3. Vyrenderovanie vašej šablóny s dátami
+        return self.render('admin/index.html', stats=stats, total_count=total_count)
 
 # 2. Základná trieda pre bežné tabuľky (pre všetkých prihlásených)
 class SecureView(ModelView):
@@ -108,7 +144,9 @@ class ZakazkaView(SecureView):
         if id_firma:
             query = query.filter(Zakazka.id_firma == id_firma)            
         return query
-    
+
+    def get_klienti():
+        return Firma.query.filter_by(typ='ZAKAZNIK').all()    
     
     column_default_sort = ('id', True)
         
@@ -141,11 +179,7 @@ class ZakazkaView(SecureView):
         'akcie': 'Položky'
     }
 
-    # vytvorenie zakazky a edit
-    
-    def get_klienti():
-        return Firma.query.filter_by(typ='ZAKAZNIK').all()
-    
+    # vytvorenie zakazky a edit    
     create_modal = False
     create_template = 'admin/zakazka_create.html'
     #edit_template = 'admin/zakazka_edit.html'
@@ -153,6 +187,13 @@ class ZakazkaView(SecureView):
     edit_modal = True
     edit_modal_template = 'admin/zakazka_edit.html'
 
+    #online edit
+    column_editable_list = ['stav_zakazky']
+    
+    form_choices = {
+        'stav_zakazky': [(e.name, e.value) for e in StavZakazky]     
+    }
+    
     
     form_widget_args = {
         'zamestnanec': {'required': False},
@@ -209,7 +250,9 @@ class ZakazkaView(SecureView):
 
     column_formatters = {
         'akcie': _akcie_formatter,
-        'termin_dokoncenia': date_formatter
+        'termin_dokoncenia': date_formatter,    
+        'stav_zakazky': enum_formatter,
+        'typ_zakazky': enum_formatter,
     }
 
 

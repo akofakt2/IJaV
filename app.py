@@ -20,9 +20,9 @@ from werkzeug.security import generate_password_hash
 from wtforms import PasswordField, TextAreaField, HiddenField, StringField, SelectField
 
 # Importujeme inštanciu databázy a modely z nášho database.py
-from database import db, Zamestnanec, Firma, Zakazka, Polozka, ZurnalCeny, ZurnalStavy, Pokladna, TypFirmy, Ucet, init_languages, Jazyk, TypPohybu, StavZakazky
+from database import db, Zamestnanec, Firma, Zakazka, Polozka, ZurnalCeny, ZurnalStavy, Pokladna, TypFirmy, Ucet, init_languages, Jazyk, TypPohybu, StavZakazky, StavNaklady
 
-from views import ZakazkaView, SecureView, AdminIndexView, AdminOnlyView, SecureAdminIndex, date_formatter
+from views import ZakazkaView, SecureView, AdminIndexView, AdminOnlyView, SecureAdminIndex, date_formatter, enum_formatter
 
 from api import api_bp
 
@@ -128,6 +128,11 @@ class PolozkaView(SecureView):
     )
 
     column_editable_list = ['popis', 'stav_platby', 'stav_naklady']
+    
+    column_choices = {
+        'stav_zakazky': [(e.name, e.value) for e in StavZakazky],
+        'stav_naklady': [(e.name, e.value) for e in StavNaklady],
+    }
 
     # Ako sa budú stĺpce volať v hlavičke tabuľky a vo formulároch
     column_labels = {
@@ -426,6 +431,10 @@ class PokladnaView(SecureView):
             model.id_zamestnanca = current_user.id            
         super().on_model_change(form, model, is_created)
 
+class JazykView(SecureView):
+    create_modal = True
+    edit_modal = True
+
 
 # 3. Inicializácia Flask-Admin (zatiaľ necháme otvorené pre vývoj)
 #admin = Admin(app, name='IJaV Kalkulačka')
@@ -440,10 +449,6 @@ admin = Admin(
     ),
     theme=Bootstrap4Theme()
 )
-
-class JazykView(SecureView):
-    create_modal = True
-    edit_modal = True
 
 
 # Pridanie tabuliek do Admin panelu, aby sme ich mohli klikať

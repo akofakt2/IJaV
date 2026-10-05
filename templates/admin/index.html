@@ -1,0 +1,34 @@
+{% extends 'admin/master.html' %}
+
+{% block body %}
+<div class="container-fluid mt-3">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2>Prehľad zákaziek</h2>
+            <p class="text-muted">Aktuálny stav zákaziek v systéme (Celkovo: <strong>{{ total_count }}</strong>)</p>
+        </div>
+    </div>
+
+    <!-- Riadok s kartami stavov -->
+    <div class="row">
+        {% for stav, count in stats.items() %}
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card shadow-sm border-left-primary h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1 text-muted">
+                                {{ stav }}
+                            </div>
+                            <div class="h3 mb-0 font-weight-bold text-gray-800">
+                                {{ count }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
