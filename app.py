@@ -20,7 +20,7 @@ from werkzeug.security import generate_password_hash
 from wtforms import PasswordField, TextAreaField, HiddenField, StringField, SelectField
 
 # Importujeme inštanciu databázy a modely z nášho database.py
-from database import db, Zamestnanec, Firma, Zakazka, Polozka, ZurnalCeny, ZurnalStavy, Pokladna, TypFirmy, Ucet, init_languages, Jazyk, TypPohybu, StavZakazky, StavNaklady
+from database import db, Zamestnanec, Firma, Zakazka, Polozka, Pokladna, TypFirmy, Ucet, init_languages, Jazyk, TypPohybu, StavZakazky, StavNaklady, StavPlatby
 
 from views import ZakazkaView, SecureView, AdminIndexView, AdminOnlyView, SecureAdminIndex, date_formatter, enum_formatter
 
@@ -163,6 +163,16 @@ class PolozkaView(SecureView):
         'dodavatel': {
             'query_factory': lambda: db.session.query(Firma).filter(Firma.typ == TypFirmy.DODAVATEL)
         }
+    }
+    
+    column_formatters = {        
+        'stav_platby': enum_formatter,
+        'stav_naklady': enum_formatter,
+    }
+
+    form_choices = {
+        'stav_platby': [(e.name, e.value) for e in StavPlatby],
+        'stav_naklady': [(e.name, e.value) for e in StavNaklady]     
     }
             
             
